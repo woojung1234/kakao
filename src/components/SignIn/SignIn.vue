@@ -4,91 +4,12 @@
     <div class="container">
       <div id="phone">
         <div id="content-wrapper">
-          <!-- 로그인 카드 -->
-          <div :class="['card', { hidden: !isLoginVisible }]" id="login">
-            <form @submit.prevent="handleLogin">
-              <h1>Sign in</h1>
-              <div class="input" :class="{ active: isEmailFocused || email }">
-                <input
-                    id="email"
-                    type="email"
-                    v-model="email"
-                    @focus="focusInput('email')"
-                    @blur="blurInput('email')"
-                    required
-                />
-                <label for="email">Username or Email</label>
-              </div>
-              <div class="input" :class="{ active: isPasswordFocused || password }">
-                <input
-                    id="password"
-                    type="password"
-                    v-model="password"
-                    @focus="focusInput('password')"
-                    @blur="blurInput('password')"
-                    required
-                />
-                <label for="password">Password</label>
-              </div>
-              <span class="checkbox remember">
-                <input type="checkbox" id="remember" v-model="rememberMe" />
-                <label for="remember" class="read-text">Remember me</label>
-              </span>
-              <button :disabled="!isLoginFormValid">Login</button>
-            </form>
-            <a href="javascript:void(0)" class="account-check" @click="toggleCard">
-              Already have an account? <b>Sign in</b>
-            </a>
-          </div>
-
-          <!-- 회원가입 카드 -->
-          <div :class="['card', { hidden: isLoginVisible }]" id="register">
-            <form @submit.prevent="handleRegister">
-              <h1>Sign up</h1>
-              <div class="input" :class="{ active: isRegisterEmailFocused || registerEmail }">
-                <input
-                    id="register-email"
-                    type="email"
-                    v-model="registerEmail"
-                    @focus="focusInput('registerEmail')"
-                    @blur="blurInput('registerEmail')"
-                    required
-                />
-                <label for="register-email">Email</label>
-              </div>
-              <div class="input" :class="{ active: isRegisterPasswordFocused || registerPassword }">
-                <input
-                    id="register-password"
-                    type="password"
-                    v-model="registerPassword"
-                    @focus="focusInput('registerPassword')"
-                    @blur="blurInput('registerPassword')"
-                    required
-                />
-                <label for="register-password">Password</label>
-              </div>
-              <div class="input" :class="{ active: isConfirmPasswordFocused || confirmPassword }">
-                <input
-                    id="confirm-password"
-                    type="password"
-                    v-model="confirmPassword"
-                    @focus="focusInput('confirmPassword')"
-                    @blur="blurInput('confirmPassword')"
-                    required
-                />
-                <label for="confirm-password">Confirm Password</label>
-              </div>
-              <span class="checkbox remember">
-                <input type="checkbox" id="terms" v-model="acceptTerms" required />
-                <label for="terms" class="read-text"
-                >회원가입을 <b>동의</b>합니다.</label
-                >
-              </span>
-              <button :disabled="!isRegisterFormValid">Register</button>
-            </form>
-            <a href="javascript:void(0)" class="account-check" @click="toggleCard">
-              Don't have an account? <b>Sign up</b>
-            </a>
+          <!-- 카카오 로그인 버튼 -->
+          <div class="card" id="kakao-login">
+            <h1>Sign in with Kakao</h1>
+            <button id="kakao-login-btn" @click="handleKakaoLogin">
+              Login with Kakao
+            </button>
           </div>
         </div>
       </div>
@@ -97,63 +18,85 @@
 </template>
 
 <script>
-import createSignInHandlers from "./SignIn.js"; // 경로 수정
-import { ref, computed } from "vue";
-import { useRouter } from "vue-router";
 import { useStore } from "vuex";
+import { useRouter } from "vue-router";
+import { useToast } from "vue-toastification"; // Toast 사용
 
 export default {
   setup() {
-    // SignIn.js에서 핸들러와 상태 가져오기
-    const {
-      isLoginVisible,
-      email,
-      password,
-      registerEmail,
-      registerPassword,
-      rememberMe,
-      isEmailFocused,
-      isPasswordFocused,
-      isRegisterEmailFocused,
-      isRegisterPasswordFocused,
-      isLoginFormValid,
-      isRegisterFormValid,
-      toggleCard,
-      focusInput,
-      blurInput,
-      handleLogin,
-      handleRegister,
-    } = createSignInHandlers({
-      useRouter,
-      useStore,
-      ref,
-      computed,
-    });
+    const store = useStore();
+    const router = useRouter();
+    const toast = useToast();
+
+    const handleKakaoLogin = async () => {
+      const kakaoAppKey = process.env.KAKAO_API_KEY;
+      const redirectUri = process.env.REDIRECT_URI;
+
+      if (!kakaoAppKey || !redirectUri) {
+        toast.error("Kakao API Key 또는 Redirect URI가 설정되지 않았습니다.");
+        return;
+      }
+
+      // Kakao SDK 초기화
+      if (!window.Kakao.isInitialized()) {
+        window.Kakao.init(kakaoAppKey);
+      }
+
+      try {
+        // Kakao 로그인 수행
+        const authObj = await new Promise((resolve, reject) => {
+          window.Kakao.Auth.login({
+            success: (authObj) => resolve(authObj),
+            fail: (error) => reject(error),
+          });
+        });
+
+        // 사용자 정보 요청
+        const userInfo = await window.Kakao.API.request({
+          url: "/v2/user/me",
+        });
+
+        // Vuex에 로그인 상태 저장
+        await store.dispatch("loginWithKakao", {
+          accessToken: authObj.access_token,
+          user: {
+            id: userInfo.id,
+            email: userInfo.kakao_account?.email || "이메일 없음",
+            nickname: userInfo.properties.nickname,
+          },
+        });
+
+        // 환영 메시지 표시
+        toast.success(`환영합니다, ${userInfo.properties.nickname}!`);
+
+        // 홈 페이지로 리디렉션
+        router.push("/");
+      } catch (error) {
+        console.error("카카오 로그인 실패:", error);
+        toast.error("로그인에 실패했습니다. 다시 시도해주세요.");
+      }
+    };
 
     return {
-      isLoginVisible,
-      email,
-      password,
-      registerEmail,
-      registerPassword,
-      rememberMe,
-      isEmailFocused,
-      isPasswordFocused,
-      isRegisterEmailFocused,
-      isRegisterPasswordFocused,
-      isLoginFormValid,
-      isRegisterFormValid,
-      toggleCard,
-      focusInput,
-      blurInput,
-      handleLogin,
-      handleRegister,
+      handleKakaoLogin,
     };
   },
 };
 </script>
 
 <style scoped>
-@import "./SignIn.css"; /* 스타일 유지 */
+#kakao-login-btn {
+  background-color: #fee500;
+  border: none;
+  color: #3c1e1e;
+  padding: 15px;
+  font-size: 16px;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-top: 20px;
+}
 
+#kakao-login-btn:hover {
+  background-color: #ffc107;
+}
 </style>
