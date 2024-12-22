@@ -84,7 +84,6 @@ export default {
     }
 
     try {
-      console.log("Using API Key:", apiKey); // API Key 로그 출력
 
       // 대표 영화 데이터 로드
       const popularResponse = await axios.get(

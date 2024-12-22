@@ -5,11 +5,12 @@
   "scripts": {
     "serve:dev": "cross-env NODE_ENV=development vue-cli-service serve",
     "serve:prod": "cross-env NODE_ENV=production vue-cli-service serve",
-    "build:dev": "cross-env NODE_ENV=development vue-cli-service build",
-    "build:prod": "cross-env NODE_ENV=production vue-cli-service build",
+    "build:dev": "cross-env NODE_ENV=development vue-cli-service build && copy dist\\index.html dist\\404.html",
+    "build:prod": "cross-env NODE_ENV=production vue-cli-service build && copy dist\\index.html dist\\404.html",
     "lint": "vue-cli-service lint",
     "deploy": "npm run build:prod && gh-pages -d dist"
   }
+
 ,
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^6.7.1",

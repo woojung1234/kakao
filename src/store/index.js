@@ -52,8 +52,9 @@ export default createStore({
   },
   actions: {
     async loginWithKakao({ commit }) {
+      // Kakao 초기화
       if (!window.Kakao.isInitialized()) {
-        const kakaoApiKey = process.env.KAKAO_API_KEY;
+        const kakaoApiKey = process.env.VUE_APP_KAKAO_API_KEY; // 환경 변수 접두사 확인
         if (!kakaoApiKey) {
           console.error("Kakao API Key is missing in the environment variables.");
           throw new Error("Kakao API Key가 설정되지 않았습니다.");
@@ -62,6 +63,7 @@ export default createStore({
       }
 
       try {
+        // 로그인 요청
         const authResponse = await new Promise((resolve, reject) => {
           window.Kakao.Auth.login({
             success: (authObj) => resolve(authObj),
@@ -69,30 +71,38 @@ export default createStore({
           });
         });
 
+        // 사용자 정보 요청
         const userInfo = await window.Kakao.API.request({
           url: "/v2/user/me",
         });
 
+        // Vuex에 로그인 상태 및 사용자 정보 저장
+        const userData = {
+          id: userInfo.id,
+          nickname: userInfo.properties.nickname,
+          profile_image: userInfo.properties.profile_image,
+        };
+
         commit("SET_LOGIN_STATE", {
           accessToken: authResponse.access_token,
-          user: {
-            id: userInfo.id,
-            email: userInfo.kakao_account.email,
-            nickname: userInfo.properties.nickname,
-          },
+          user: userData,
         });
 
-        // TMDB API Key 저장
-        localStorage.setItem("apiKey", process.env.TMDB_API_KEY || "");
+        // localStorage에 로그인 정보 저장
+        localStorage.setItem("apiKey", process.env.TMDB_API_KEY || ""); // TMDB API Key 저장
         localStorage.setItem("isLoggedIn", "true");
         localStorage.setItem("accessToken", authResponse.access_token);
-        localStorage.setItem("user", JSON.stringify(userInfo));
+        localStorage.setItem("user", JSON.stringify(userData)); // 저장 구조 통일
+
         console.log("Kakao login successful:", userInfo);
       } catch (error) {
+        // 에러 처리
         console.error("Kakao login failed:", error);
+        alert("Kakao 로그인에 실패했습니다. 다시 시도해주세요.");
         throw new Error("Kakao 로그인에 실패했습니다.");
       }
-    },
+    }
+    ,
 
     logout({ commit }) {
       commit("LOGOUT");
@@ -113,6 +123,8 @@ export default createStore({
 
       if (isLoggedIn && accessToken) {
         commit("SET_LOGIN_STATE", { accessToken, user });
+      } else {
+        console.warn("Failed to restore login state from localStorage.");
       }
     },
 

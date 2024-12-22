@@ -39,5 +39,10 @@ module.exports = defineConfig(() => {
         return definitions;
       });
     },
+    pluginOptions: {
+      html: {
+        minify: true,
+      },
+    },
   };
 });

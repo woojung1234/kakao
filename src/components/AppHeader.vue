@@ -25,7 +25,10 @@
 
     <!-- 우측 사용자 정보 및 로그아웃 -->
     <div class="auth">
-      <span v-if="isLoggedIn" class="user-email">{{ userEmail }}</span>
+      <div class="user-info" v-if="isLoggedIn">
+        <img class="profile-image" :src="userProfileImage" alt="프로필 이미지" />
+        <span class="user-name">{{ userName }}</span>
+      </div>
       <button v-if="isLoggedIn" @click="logout" aria-label="로그아웃">
         <font-awesome-icon :icon="['fas', 'right-from-bracket']" />
       </button>
@@ -45,17 +48,18 @@ const store = useStore();
 const router = useRouter();
 
 const isLoggedIn = computed(() => store.getters.isLoggedIn);
-const userEmail = computed(() => {
+const userName = computed(() => {
   const user = store.getters.user;
-  return user ? user.email : "";
+  return user ? user.nickname : ""; // 사용자 닉네임 반환
 });
 
 const logout = () => {
   store.dispatch("logout");
   router.push("/signin");
 };
+
 const goToSearch = () => {
-  router.push('/search');
+  router.push("/search");
 };
 const goToHome = () => {
   router.push("/");
@@ -66,18 +70,47 @@ const goToPopular = () => {
 const goToWishlist = () => {
   router.push("/wishlist");
 };
+const userProfileImage = computed(() => {
+  const user = store.getters.user;
+  return user && user.profile_image ? user.profile_image : ""; // 프로필 이미지 반환
+});
+
 </script>
+
 
 
 <style scoped>
 
-.user-email {
-  margin-right: 0px;
-  font-size: 15px;
-  font-weight: bold;
-  color: #f4ebeb;
+.profile-image {
+  width: 30px; /* 이미지 크기 */
+  height: 30px; /* 이미지 크기 */
+  border-radius: 50%; /* 원형으로 만들기 */
+  object-fit: cover; /* 이미지 비율 유지 */
+  border: 2px solid #ffffff; /* 테두리 */
+  margin-right: 10px; /* 닉네임과의 간격 */
 }
 
+.user-name {
+  margin-right: 10px; /* 닉네임과 이메일 사이 간격 */
+  font-size: 15px; /* 닉네임 글자 크기 */
+  font-weight: bold; /* 굵은 글꼴 */
+  color: #f4ebeb; /* 닉네임 색상 변경 (노란색) */
+}
+.user-name:hover {
+  color: #ffa500; /* 호버 시 색상 */
+}
+
+.auth {
+  display: flex;
+  align-items: center;
+  gap: 10px; /* 요소 간 간격 */
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 5px; /* 이미지와 이름 간격 */
+}
 .header {
   padding: 10px 20px;
   background-color: rgba(31, 31, 31, 0.9);
@@ -179,4 +212,13 @@ button:hover {
     font-size: 12px; /* 로그인/로그아웃 아이콘 크기 축소 */
   }
 }
+.profile-image {
+  width: 30px; /* 이미지 크기 */
+  height: 30px; /* 이미지 크기 */
+  border-radius: 50%; /* 원형으로 만들기 */
+  object-fit: cover; /* 이미지 비율 유지 */
+  border: 2px solid #ffffff; /* 테두리 */
+  margin-right: 10px; /* 닉네임과의 간격 */
+}
+
 </style>
