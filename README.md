@@ -7,6 +7,7 @@
 ## 🚀 주요 기능
 
 사용자 인증
+- 카카오 oauth를 이용한 로그인 기능 구현
 - 로그인 및 로그아웃 기능
 - 회원가입 및 API 키 유효성 검증
 
@@ -25,8 +26,8 @@
 ## 1. 프로젝트 클론
    먼저 GitHub에서 프로젝트를 클론합니다:
 ```
-git clone https://github.com/woojung1234/moviewsd.git
-cd moviewsd
+git clone https://github.com/woojung1234/kakao.git
+cd kakao
 ```
 ## 2. Project setup
     
@@ -34,30 +35,51 @@ npm을 사용하여 필수 의존성들을 설치합니다.
 ```
 npm install
 ```
+.env-prod, .env-dev를 알맞게 설정합니다.
+```
+#.env-dev
+
+IP_ADDRESS=localhost
+PORT=3000
+TMDB_API_KEY=
+KAKAO_API_KEY=
+API_BASE_URL=http://localhost:3000/api
+REDIRECT_URI=http://localhost:3000/oauth/callback
+DEBUG=true
+
+```
+```
+#.env-prod
+
+IP_ADDRESS=0.0.0.0
+PORT=80
+TMDB_API_KEY=
+KAKAO_API_KEY=
+API_BASE_URL=https://woojung1234.github.io/kakao/api
+REDIRECT_URI=https://woojung1234.github.io/kakao/oauth/callback
+DEBUG=false
+
+```
 
 ## 3. 개발 서버 실행
 ```
-npm run serve
+npm run serve:dev
 ```
 
 ## 4. 프로덕션 빌드
 ```
-npm run build
+npm run build:prod
 ```
 생성된 빌드는 dist/ 폴더에 저장됩니다.
 
 ## 5. 배포
 ```
-git add .
-git commit -m "commit"
-git push origin your-branch
+npm run deploy
 ```
-브랜치 push 후 PR에서 main 브랜치와 병합하여 배포합니다.
-### 또는 
-로컬 main 브랜치에서 
-```
-git merge 해당 브랜치
-git push origin main
-```
- 으로 병합 후 배포합니다.
+배포 후 GitHub Pages에서 앱을 확인할 수 있습니다.
 
+### 6. 기타 명령어
+로컬에서 프로덕션 빌드 확인
+```
+npm run serve:prod
+```
